@@ -18,6 +18,7 @@ unsigned long long previousPFN = 0;
 unsigned long long continuousVP = 0;
 unsigned long long numVP = 0;
 std::vector <unsigned long long> region_vector;
+std::vector <unsigned long long> region_vector_2;
 // [0]  - 1
 // [1]  - 2~3
 // [2]  - 4~7
@@ -33,15 +34,15 @@ std::vector <unsigned long long> region_vector;
 static void print_page(unsigned long long address, unsigned long long data,
     const char *lib_name) {
 
-    printf("0x%-16llx : pfn %-16llx soft-dirty %d file/shared %d "
-        "swapped %d present %d library %s\n",
-        address,
-        data & 0x7fffffffffffff,
-        (data >> 55) & 1,
-        (data >> 61) & 1,
-        (data >> 62) & 1,
-        (data >> 63) & 1,
-        lib_name);
+    //printf("0x%-16llx : pfn %-16llx soft-dirty %d file/shared %d "
+    //    "swapped %d present %d library %s\n",
+    //    address,
+    //    data & 0x7fffffffffffff,
+    //    (data >> 55) & 1,
+    //    (data >> 61) & 1,
+    //    (data >> 62) & 1,
+    //    (data >> 63) & 1,
+    //    lib_name);
 
     unsigned long long pfn = data & 0x7fffffffffffff;
     if(pfn != 0) {
@@ -59,33 +60,46 @@ static void print_page(unsigned long long address, unsigned long long data,
               
               if(curRegion == 1)  {
                 region_vector[0]++;
-              } else if( 2 <= curRegion < 4) {
+                region_vector_2[0] += curRegion;
+              } else if( 2 <= curRegion && curRegion < 4) {
                 region_vector[1]++;
-              } else if( 4 <= curRegion < 8) {
+                region_vector_2[1] += curRegion;
+              } else if( 4 <= curRegion && curRegion < 8) {
                 region_vector[2]++;
-              } else if( 8 <= curRegion < 16) {
+                region_vector_2[2] += curRegion;
+              } else if( 8 <= curRegion && curRegion < 16) {
                 region_vector[3]++;
-              } else if( 16 <= curRegion < 32) {
+                region_vector_2[3] += curRegion;
+              } else if( 16 <= curRegion && curRegion < 32) {
                 region_vector[4]++;
-              } else if( 33 <= curRegion < 64) {
+                region_vector_2[4] += curRegion;
+              } else if( 33 <= curRegion && curRegion < 64) {
                 region_vector[5]++;
-              } else if( 64 <= curRegion < 128) {
+                region_vector_2[5] += curRegion;
+              } else if( 64 <= curRegion && curRegion < 128) {
                 region_vector[6]++;
-              } else if( 128 <= curRegion < 256) {
+                region_vector_2[6] += curRegion;
+              } else if( 128 <= curRegion && curRegion < 256) {
                 region_vector[7]++;
-              } else if( 256 <= curRegion < 512) {
+                region_vector_2[7] += curRegion;
+              } else if( 256 <= curRegion && curRegion < 512) {
                 region_vector[8]++;
-              } else if( 512 <= curRegion < 1024) {
+                region_vector_2[8] += curRegion;
+              } else if( 512 <= curRegion && curRegion < 1024) {
                 region_vector[9]++;
+                region_vector_2[9] += curRegion;
               } else if( 1024 <= curRegion) {
                 region_vector[10]++;
+                region_vector_2[10] += curRegion;
               }
               curRegion = 1;
             }
             previousPFN = pfn;
             numVP++;
             float contRatio = (float) continuousVP / (float) numVP;
+            printf("\n\n");
             printf("continuousVP: %llu\t totalVP: %llu\t continuous ratio: %f\ncurrent region: %llu\t average region: %f\tlargest region: %llu\n", continuousVP, numVP, contRatio, curRegion, averageRegion, largestRegion);
+            printf("##################################################\n");
             printf("region[VPs==1]        : %llu\n", region_vector[0]);
             printf("region[VPs==2~3]      : %llu\n", region_vector[1]);
             printf("region[VPs==4~7]      : %llu\n", region_vector[2]);
@@ -97,6 +111,18 @@ static void print_page(unsigned long long address, unsigned long long data,
             printf("region[VPs==256~511]  : %llu\n", region_vector[8]);
             printf("region[VPs==512~1023] : %llu\n", region_vector[9]);
             printf("region[VPs==1024~   ] : %llu\n", region_vector[10]);
+            printf("##################################################\n");
+            printf("inVPs: region[VPs==1]        : %llu\n", region_vector_2[0]);
+            printf("inVPs: region[VPs==2~3]      : %llu\n", region_vector_2[1]);
+            printf("inVPs: region[VPs==4~7]      : %llu\n", region_vector_2[2]);
+            printf("inVPs: region[VPs==8~15]     : %llu\n", region_vector_2[3]);
+            printf("inVPs: region[VPs==16~31]    : %llu\n", region_vector_2[4]);
+            printf("inVPs: region[VPs==32~63]    : %llu\n", region_vector_2[5]);
+            printf("inVPs: region[VPs==64~127]   : %llu\n", region_vector_2[6]);
+            printf("inVPs: region[VPs==128~255]  : %llu\n", region_vector_2[7]);
+            printf("inVPs: region[VPs==256~511]  : %llu\n", region_vector_2[8]);
+            printf("inVPs: region[VPs==512~1023] : %llu\n", region_vector_2[9]);
+            printf("inVPs: region[VPs==1024~   ] : %llu\n", region_vector_2[10]);
     }
 }
 
@@ -218,6 +244,11 @@ int main(int argc, char *argv[]) {
     for(unsigned long long j = 0; j < 11; j++)  {
       region_vector.push_back(0);
     }
+
+    for(unsigned long long j = 0; j < 11; j++)  {
+      region_vector_2.push_back(0);
+    }
+
 
     for(int i = 1; i < argc; i ++) {
         pid_t pid = (pid_t)strtoul(argv[i], NULL, 0);
